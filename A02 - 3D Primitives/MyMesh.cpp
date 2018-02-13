@@ -1,4 +1,7 @@
 #include "MyMesh.h"
+#include <math.h>
+#define PI 3.14159265
+
 void MyMesh::Init(void)
 {
 	m_bBinded = false;
@@ -276,7 +279,25 @@ void MyMesh::GenerateCone(float a_fRadius, float a_fHeight, int a_nSubdivisions,
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	float halfHeight = a_fHeight / 2.0f;
+	vector3 tip = vector3(0, halfHeight, 0);
+	vector3 baseCenter = vector3(0, -halfHeight, 0);
+	vector3 lastPoint = vector3(a_fRadius, -halfHeight, 0);
+	for (int i = 1; i <= a_nSubdivisions; i++) {
+		float rads = (i / (float)a_nSubdivisions) * PI * 2;
+		vector3 currPoint = (vector3(a_fRadius * cos(rads), -halfHeight, a_fRadius * sin(rads)));
+
+		AddVertexPosition(currPoint);
+		AddVertexPosition(lastPoint);
+		AddVertexPosition(tip);
+
+		AddVertexPosition(currPoint);
+		AddVertexPosition(baseCenter);
+		AddVertexPosition(lastPoint);
+
+		lastPoint = currPoint;
+	}
+
 	// -------------------------------
 
 	// Adding information about color
@@ -300,7 +321,31 @@ void MyMesh::GenerateCylinder(float a_fRadius, float a_fHeight, int a_nSubdivisi
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
+	float halfHeight = a_fHeight / 2.0f;
+	vector3 topCenter = vector3(0, halfHeight, 0);
+	vector3 bottomCenter = vector3(0, -halfHeight, 0);
+	vector3 lastTopPoint = vector3(a_fRadius, halfHeight, 0);
+	vector3 lastBottomPoint = vector3(a_fRadius, -halfHeight, 0);
+
+
+	for (int i = 1; i <= a_nSubdivisions; i++) {
+		float rads = (i / (float)a_nSubdivisions) * PI * 2;
+		vector3 currTopPoint = (vector3(a_fRadius * cos(rads), halfHeight, a_fRadius * sin(rads)));
+		vector3 currBottomPoint = (vector3(a_fRadius * cos(rads), -halfHeight, a_fRadius * sin(rads)));
+
+		AddQuad(currBottomPoint, lastBottomPoint, currTopPoint, lastTopPoint);
+
+		AddVertexPosition(currTopPoint);
+		AddVertexPosition(lastTopPoint);
+		AddVertexPosition(topCenter);
+
+		AddVertexPosition(currBottomPoint);
+		AddVertexPosition(bottomCenter);
+		AddVertexPosition(lastBottomPoint);
+
+		lastBottomPoint = currBottomPoint;
+		lastTopPoint = currTopPoint;
+	}
 	// -------------------------------
 
 	// Adding information about color
@@ -330,8 +375,29 @@ void MyMesh::GenerateTube(float a_fOuterRadius, float a_fInnerRadius, float a_fH
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	float halfHeight = a_fHeight / 2.0f;
+	vector3 lastTopInnerPoint = vector3(a_fInnerRadius, halfHeight, 0);
+	vector3 lastBottomInnerPoint = vector3(a_fInnerRadius, -halfHeight, 0);
+	vector3 lastTopOuterPoint = vector3(a_fOuterRadius, halfHeight, 0);
+	vector3 lastBottomOuterPoint = vector3(a_fOuterRadius, -halfHeight, 0);
+
+	for (int i = 1; i <= a_nSubdivisions; i++) {
+		float rads = (i / (float)a_nSubdivisions) * PI * 2;
+		vector3 currTopInnerPoint = (vector3(a_fInnerRadius * cos(rads), halfHeight, a_fInnerRadius * sin(rads)));
+		vector3 currBottomInnerPoint = (vector3(a_fInnerRadius * cos(rads), -halfHeight, a_fInnerRadius * sin(rads)));
+		vector3 currTopOuterPoint = (vector3(a_fOuterRadius * cos(rads), halfHeight, a_fOuterRadius * sin(rads)));
+		vector3 currBottomOuterPoint = (vector3(a_fOuterRadius * cos(rads), -halfHeight, a_fOuterRadius * sin(rads)));
+
+		AddQuad(currTopInnerPoint, lastTopInnerPoint, currBottomInnerPoint, lastBottomInnerPoint);
+		AddQuad(currBottomOuterPoint, lastBottomOuterPoint, currTopOuterPoint, lastTopOuterPoint);
+		AddQuad(currBottomInnerPoint, lastBottomInnerPoint, currBottomOuterPoint, lastBottomOuterPoint);
+		AddQuad(currTopOuterPoint, lastTopOuterPoint, currTopInnerPoint, lastTopInnerPoint);
+
+		lastBottomOuterPoint = currBottomOuterPoint;
+		lastTopOuterPoint = currTopOuterPoint;
+		lastBottomInnerPoint = currBottomInnerPoint;
+		lastTopInnerPoint = currTopInnerPoint;
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
@@ -362,7 +428,28 @@ void MyMesh::GenerateTorus(float a_fOuterRadius, float a_fInnerRadius, int a_nSu
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fOuterRadius * 2.0f, a_v3Color);
+	float bigRadius = a_fOuterRadius - (a_fOuterRadius - a_fInnerRadius);
+	float littleRadius = (a_fOuterRadius - a_fInnerRadius) / 2.0f;
+	std::vector<vector3> lastRow;
+
+
+	for (int i = 0; i <= a_nSubdivisionsA; i++) {
+		float radians = (i / (float)a_nSubdivisionsA) * PI * 2;
+		std::vector<vector3> currRow;
+
+		for (int j = 0; j <= a_nSubdivisionsB; j++) {
+			float rads = (j / (float)a_nSubdivisionsB) * PI * 2;
+			currRow.push_back(vector3((bigRadius + littleRadius * cos(rads)) * cos(radians), littleRadius * sin(rads), (bigRadius + littleRadius * cos(rads)) * sin(radians)));
+			if (i > 0 && j > 0) {
+				AddQuad(lastRow[j - 1], lastRow[j], currRow[j - 1], currRow[j]);
+			}
+
+		}
+
+
+		lastRow = currRow;
+	}
+
 	// -------------------------------
 
 	// Adding information about color
@@ -380,15 +467,34 @@ void MyMesh::GenerateSphere(float a_fRadius, int a_nSubdivisions, vector3 a_v3Co
 		GenerateCube(a_fRadius * 2.0f, a_v3Color);
 		return;
 	}
-	if (a_nSubdivisions > 6)
-		a_nSubdivisions = 6;
+	//if (a_nSubdivisions > 6)
+	//	a_nSubdivisions = 6;
 
 	Release();
 	Init();
 
 	// Replace this with your code
-	GenerateCube(a_fRadius * 2.0f, a_v3Color);
-	// -------------------------------
+	std::vector<vector3> lastRow;
+	vector3 topCenter = vector3(0, a_fRadius, 0);
+	vector3 bottomCenter = vector3(0, -a_fRadius, 0);
+	vector3 lastTopPoint = vector3(a_fRadius, a_fRadius, 0);
+	vector3 lastBottomPoint = vector3(a_fRadius, -a_fRadius, 0);
+
+	for (int i = 0; i <= a_nSubdivisions; i++) {
+		float u = a_fRadius * cos((i / (float)a_nSubdivisions) * PI);
+		float radius = sqrt(a_fRadius * a_fRadius - u * u);
+		std::vector<vector3> currRow;
+		for (int j = 0; j <= a_nSubdivisions; j++) {
+			float rads = (j / (float)a_nSubdivisions) * PI * 2;
+
+			currRow.push_back((vector3(radius * cos(rads), u, radius * sin(rads))));
+			if (i > 0 && j > 0) {
+				AddQuad(lastRow[j - 1], lastRow[j], currRow[j - 1], currRow[j]);
+			}
+		}
+		lastRow = currRow;
+
+	}
 
 	// Adding information about color
 	CompleteMesh(a_v3Color);
