@@ -73,6 +73,9 @@ void Application::Display(void)
 		nextIdx = nextIdx % m_stopsList.size();
 		fPercentage = 0.0f;
 	}
+
+	//your code goes here
+	v3CurrentPos = vector3(0.0f, 0.0f, 0.0f);
 	//-------------------
 	
 
