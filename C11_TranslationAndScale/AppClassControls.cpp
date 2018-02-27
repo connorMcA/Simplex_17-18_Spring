@@ -413,6 +413,9 @@ void Application::ProcessKeyboard(void)
 
 	if (sf::Keyboard::isKeyPressed(sf::Keyboard::E))
 		m_pCameraMngr->MoveVertical(fSpeed);
+
+	if (sf::Keyboard::isKeyPressed(sf::Keyboard::F))
+		m_v3Rotation.x++;
 #pragma endregion
 }
 //Joystick
